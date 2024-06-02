@@ -1,0 +1,56 @@
+name: Rust
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'src/crates/**'
+      - 'src/services/**'
+      - 'Cargo.toml'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'src/crates/**'
+      - 'src/services/**'
+      - 'Cargo.toml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: rust-toolchain
+        uses: actions-rs/toolchain@v1.0.6
+        with:
+          toolchain: nightly
+          override: true
+          components: rustfmt, clippy
+      
+      - name: fluence
+        run: |
+          (curl -qsL https://raw.githubusercontent.com/fluencelabs/cli/main/install.sh | bash) && fluence update main
+
+      - name: cargo-fmt
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+      - name: cargo-clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
+
+      - name: fluence-build
+        run: |
+          rustup target add wasm32-wasi
+          ./download_sqlite.sh
+          ./build.sh
+      - name: cargo-test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+            

@@ -1,0 +1,37 @@
+aqua Types declares *
+
+export Id, KeyVec, SecretData
+
+data Id:
+    id: string
+
+func id(id: string) -> Id:
+    <- Id(id=id)
+
+data KeyVec:
+    key: []u8
+
+data Error:
+    message: string
+    is_ok: bool
+
+func isError(err: Error) -> bool:
+    <- !err.is_ok
+
+func errorOk() -> Error:
+    <- Error(message="", is_ok=true)
+
+data WorkerError:
+    workerId: Id
+    error: Error
+
+func workerError(workerId: Id, error: Error) -> WorkerError:
+    <- WorkerError(workerId, error=error)
+
+func workerErrorOk(workerId: Id) -> WorkerError:
+    <- WorkerError(workerId, error=errorOk())
+
+data SecretData:
+    secret: []u8
+    nonce: []u8
+    publicKey: KeyVec

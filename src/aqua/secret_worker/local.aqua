@@ -1,0 +1,50 @@
+aqua SecretGiver declares *
+
+import KeyVec, Error from "services.aqua"
+import Id, SecretData, errorOk from "../common.aqua"
+import SecretSender, GetSecretResult from "getter.aqua"
+import SecretSaver, PrepareResult, SaveSecretResult as SSSaveResult, SessionMetaData, Save from "saver.aqua"
+
+export SecretGiverService
+
+data PublicKey:
+    public_key: KeyVec
+
+data GenerateKeysResult:
+    value: PublicKey
+    error: Error
+
+data SaveSecretResult:
+    error: Error
+
+service SecretGiverService("secret_giver"):
+    initialize_session() -> Id
+    generate_keys(session_id: Id) -> GenerateKeysResult
+    get_encrypted_secret(session_id: Id, reciever_public_key: KeyVec) -> GetSecretResult
+    save_secret(session_id: Id, message: []u8, nonce: []u8, sender_public_key: KeyVec) -> SaveSecretResult
+
+func onLocalSecretSender() -> SecretSender:
+    getSecret = func(sessionId: Id, recieverPublicKey: KeyVec) -> GetSecretResult:
+        <- SecretGiverService.get_encrypted_secret(sessionId, recieverPublicKey)
+    <- SecretSender(getSecret)
+
+func onLocalSecretSaver() -> SecretSaver:
+    prepareGetSecret = func() -> PrepareResult:
+        sessionId <- SecretGiverService.initialize_session()
+        keys <- SecretGiverService.generate_keys(sessionId)
+        <- PrepareResult(
+            value=SessionMetaData(
+                sessionId=sessionId,
+                recieverPublicKey=keys.value.public_key
+            ),
+            error=errorOk()
+        )
+    
+    saveSecret = func(meta: SessionMetaData, secret: SecretData) -> SSSaveResult:
+        result <- SecretGiverService.save_secret(meta.sessionId, secret.secret, secret.nonce, secret.publicKey)
+        <- SSSaveResult(
+            value=Save(secretId=meta.sessionId),
+            error=result.error
+        )
+
+    <- SecretSaver(prepareGetSecret, saveSecret)

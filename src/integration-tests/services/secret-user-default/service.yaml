@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../.fluence/schemas/service.json
+version: 0
+
+name: secret_user_default
+
+modules:
+  facade:
+    get: ../../../services/modules/secret-user-default

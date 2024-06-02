@@ -1,0 +1,130 @@
+aqua Services declares *
+
+
+data KeyVec:
+  key: []u8
+
+data CryptoMetadata:
+  self_public_key: KeyVec
+  other_public_key: KeyVec
+  nonce: []u8
+
+data Error:
+  is_ok: bool
+  message: string
+
+data GetAllAvailableSecrets:
+  secret_ids: []string
+
+data GetAllAvailableSecretsResult:
+  value: GetAllAvailableSecrets
+  error: Error
+
+data GetSecret:
+  secret: []u8
+  nonce: []u8
+
+data GetSecretRequest:
+  secret_id: string
+  metadata: CryptoMetadata
+
+data GetSecretResult:
+  value: GetSecret
+  error: Error
+
+data GetUserRole:
+  role: string
+
+data GetUserRoleResult:
+  value: GetUserRole
+  error: Error
+
+data SaveSecret:
+  secret_id: string
+
+data SaveSecretRequest:
+  ciphertext: []u8
+  expired_at: u64
+  metadata: CryptoMetadata
+
+data SaveSecretResult:
+  value: SaveSecret
+  error: Error
+
+data SecretMetadata:
+  is_anyone_can_use: bool
+  expired_at: u64
+
+data SecretMetadataResult:
+  value: SecretMetadata
+  error: Error
+
+data StartHandshake:
+  public_key: KeyVec
+
+data StartHandshakeResult:
+  value: StartHandshake
+  error: Error
+
+service SecretHolder("secret-holder"):
+  change_visibility(secret_id: string, is_anyone_can_use: bool) -> Error
+  delete_secret(secret_id: string) -> Error
+  get_all_available_for_use_secrets() -> GetAllAvailableSecretsResult
+  get_all_ownable_secrets() -> GetAllAvailableSecretsResult
+  get_secret(input: GetSecretRequest) -> GetSecretResult
+  get_secret_metadata(secret_id: string) -> SecretMetadataResult
+  get_user_role(secret_id: string, user_id: string) -> GetUserRoleResult
+  initialize() -> Error
+  is_secret_available_for_use(secret_id: string) -> Error
+  is_secret_owner(secret_id: string) -> Error
+  permit_role(secret_id: string, user_id: string, role: string) -> Error
+  prepare_to_use(secret_id: string) -> Error
+  revoke_role(secret_id: string, user_id: string) -> Error
+  save_secret(input: SaveSecretRequest) -> SaveSecretResult
+  secret_key_init(secret_id: string, step: u8, users_count: u8) -> Error
+  start_handshake() -> StartHandshakeResult
+  update_expiration(secret_id: string, expired_at: u64) -> Error
+
+
+data GetSecretForUse:
+  secret: []u8
+
+data GetSecretForUseResult:
+  value: GetSecretForUse
+  error: Error
+
+service SecretUser("secret-user"):
+  get_secret(secret_id: string) -> GetSecretForUseResult
+  secret_initiate_handshake(secret_id: string, iteration: u8, users_count: u8) -> Error
+
+
+data UseSecret:
+  result: []u8
+
+data UseSecretResult:
+  value: UseSecret
+  error: Error
+
+service SecretUser2("secret-user-2"):
+  get_and_use_secret(secret_id: string, calldata: []u8) -> UseSecretResult
+  get_secret(secret_id: string) -> GetSecretForUseResult
+  secret_initiate_handshake(secret_id: string, iteration: u8, users_count: u8) -> Error
+
+
+data AlchemyRpcResponse:
+  jsonrpc: string
+  id: u8
+  result: string
+
+data AlchemyRpcResult:
+  is_ok: bool
+  error: string
+  response: AlchemyRpcResponse
+
+service AlchemyRpc("alchemy-rpc"):
+  get_eth_gas_price(api_key: string) -> AlchemyRpcResult
+  get_eth_get_balance(api_key: string, address: string, block: string) -> AlchemyRpcResult
+  get_eth_get_storage_at(api_key: string, address: string, position: string, block: string) -> AlchemyRpcResult
+  get_eth_hashrate(api_key: string) -> AlchemyRpcResult
+  get_last_block(api_key: string) -> AlchemyRpcResult
+  secret_initiate_handshake(secret_id: string, iteration: u8, users_count: u8) -> Error

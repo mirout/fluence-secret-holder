@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../.fluence/schemas/module.json
+version: 1
+
+type: compiled
+
+name: secret_user_default

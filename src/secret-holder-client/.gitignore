@@ -1,0 +1,7 @@
+node_modules
+coverage
+./package-lock.json
+src/*js
+dist/
+fluence-secret-manager-client-0.0.1.tgz
+fluence-secret-holder-client-0.0.1.tgz

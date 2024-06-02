@@ -1,0 +1,34 @@
+.idea
+.vscode
+
+# MacOS misc file
+*.DS_Store
+
+# Wasm files
+*.wasm
+*.wat
+
+# REPL history files
+*.repl_history
+
+# Temporary test files
+tmp/
+
+# Fluence local settings
+/.fluence/secrets
+/.fluence/env.yaml
+/.fluence/schemas
+/.fluence/tmp
+
+# NPM
+**/node_modules
+package-lock.json
+
+
+# Cargo
+**/target/
+
+# Local generated files
+.repl_history
+/src/ts/src/aqua
+/src/js/src/aqua

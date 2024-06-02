@@ -1,0 +1,9 @@
+[package]
+name = "crypto-imports"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crypto_module = { path = "../" }
+marine-rs-sdk = { version="0.14.0" }
+crypto-utils = { path = "../../../../crates/crypto-utils" }

@@ -1,0 +1,25 @@
+[package]
+name = "crypto-utils"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+aes-gcm = "0.10.3"
+curve25519-dalek = "4.1.1"
+marine-rs-sdk = "0.14.0"
+x25519-dalek = { version = "2.0.0", features = ["getrandom", "static_secrets"]}
+marine-error = { path = "../marine-error" }
+marine-error-derive = { path = "../marine-error/marine-error-derive" }
+getrandom = { version = "0.2.12", features = ["js"] }
+sha3 = "0.10.8"
+scrypt = "0.11.0"
+wasm-bindgen = "0.2.92"
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.115"
+
+[dev-dependencies]
+assertables = "7.0.1"

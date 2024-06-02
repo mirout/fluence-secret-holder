@@ -1,0 +1,37 @@
+total_memory_limit = "2GB"
+
+[[module]]
+name = "secret_user_default"
+load_from = "/Users/miruzavin/private/fluence/crypto/src/services/modules/secret-user-default/secret_user_default.wasm"
+
+[module.wasi.mapped_dirs]
+"/tmp" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/service/tmp"
+"/storage" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/service/storage"
+"/tmp/module" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/modules/secret_user_default/tmp/module"
+"/storage/module" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/modules/secret_user_default/storage/module"
+"/tmp/vault" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/particles"
+
+[[module]]
+name = "curl_effector"
+load_from = "/Users/miruzavin/private/fluence/crypto/.fluence/modules/curl_effector.tar.gz_5841c1968f8a4f4f75c000d9c7600373/curl_effector.wasm"
+
+  [module.mounted_binaries]
+  curl = "/usr/bin/curl"
+
+[module.wasi.mapped_dirs]
+"/tmp" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/service/tmp"
+"/storage" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/service/storage"
+"/tmp/module" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/modules/curl_effector/tmp/module"
+"/storage/module" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/modules/curl_effector/storage/module"
+"/tmp/vault" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/particles"
+
+[[module]]
+name = "alchemy-rpc-facade"
+load_from = "/Users/miruzavin/private/fluence/crypto/target/wasm32-wasi/release/alchemy-rpc-facade.wasm"
+
+[module.wasi.mapped_dirs]
+"/tmp" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/service/tmp"
+"/storage" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/service/storage"
+"/tmp/module" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/modules/alchemy-rpc-facade/tmp/module"
+"/storage/module" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/services/alchemy-rpc/modules/alchemy-rpc-facade/storage/module"
+"/tmp/vault" = "/Users/miruzavin/private/fluence/crypto/.fluence/tmp/volumes/particles"

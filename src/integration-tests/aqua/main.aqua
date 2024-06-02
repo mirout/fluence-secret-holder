@@ -1,0 +1,100 @@
+aqua Tests declares *
+
+import "@fluencelabs/aqua-lib/builtin.aqua"
+import "@fluencelabs/aqua-lib/subnet.aqua"
+import "services.aqua"
+
+use "deals.aqua"
+
+export getIntegrationTestsDeal, initializeSecretHolderAll, getSecretUser1, getSecretUser2, getAndUseSecretUser2
+
+func getIntegrationTestsDeal() -> string:
+    deals <- Deals.get()
+    dealId = deals.integrationTestDeployment!.dealIdOriginal
+
+    <- dealId
+
+
+-- Resolve subnet for the deal
+func resolveDealSubnet(dealId: string) -> SubnetResolveResult:
+    on HOST_PEER_ID:
+        subnet <- Subnet.resolve(dealId)
+    <- subnet
+
+-- Return list of workers in the subnet
+func resolveSubnet() -> SubnetResolveResult:
+    deals <- Deals.get()
+    dealId = deals.integrationTestDeployment!.dealIdOriginal
+
+    <- resolveDealSubnet(dealId)
+
+func getSecretUser1(secretId: string) -> []GetSecretForUseResult, []Error:
+    res: *GetSecretForUseResult
+    errors: *Error
+
+    workers <- resolveSubnet()
+
+    for w <- workers.workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                errors <- SecretHolder.prepare_to_use(secretId)
+                res <- SecretUser.get_secret(secretId)
+    
+    <- res, errors
+
+func getSecretUser2(secretId: string) -> []GetSecretForUseResult, []Error:
+    res: *GetSecretForUseResult
+    errors: *Error
+
+    workers <- resolveSubnet()
+
+    for w <- workers.workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                errors <- SecretHolder.prepare_to_use(secretId)
+                res <- SecretUser2.get_secret(secretId)
+    
+    <- res, errors
+
+func getAndUseSecretUser2(secretId: string, calldata: []u8) -> []UseSecretResult, []Error:
+    res: *UseSecretResult
+    errors: *Error
+
+    workers <- resolveSubnet()
+
+    for w <- workers.workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                errors <- SecretHolder.prepare_to_use(secretId)
+                res <- SecretUser2.get_and_use_secret(secretId, calldata)
+    
+    <- res, errors
+
+data WorkerError:
+    workerId: string
+    error: Error
+
+-- Initialize SecretHolder on provided workers
+func initializeSecretHolder(workers: []Worker) -> []WorkerError:
+    res: *WorkerError
+    
+    for w <- workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                initResult = SecretHolder.initialize()
+                res <<- WorkerError(workerId=w.worker_id!, error=initResult)
+        else:
+            error = Error(is_ok=false, message="Worker id is nil")
+            res <<- WorkerError(workerId="", error=error)
+    
+    <- res
+
+-- Initialize SecretHolder on all workers in the subnet
+func initializeSecretHolderAll() -> []WorkerError:
+    worker <- resolveSubnet()
+    if !worker.success:
+        Console.print(["Failed to resolve subnet: ", worker.error])
+
+    res: *WorkerError
+
+    <- initializeSecretHolder(worker.workers)

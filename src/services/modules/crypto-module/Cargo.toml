@@ -1,0 +1,20 @@
+[package]
+name = "crypto_module"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# log = "0.4.20"
+marine-rs-sdk = { version="0.14.0" }
+marine-error = { path = "../../../crates/marine-error" }
+marine-error-derive = { path = "../../../crates/marine-error/marine-error-derive" }
+secret-holder-utils = { path = "../../../crates/secret-holder-utils" }
+crypto-utils = { path = "../../../crates/crypto-utils" }
+localfile_adapter = { path = "../localfile-adapter" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+marine-rs-sdk-test = "0.16.0"

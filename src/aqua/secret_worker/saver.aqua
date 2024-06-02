@@ -1,0 +1,22 @@
+aqua SecretSave declares *
+
+import Id, KeyVec, Error, SecretData from "../common.aqua"
+
+data SessionMetaData:
+    sessionId: Id
+    recieverPublicKey: KeyVec
+
+data PrepareResult:
+    value: SessionMetaData
+    error: Error
+
+data Save:
+    secretId: Id
+
+data SaveSecretResult:
+    value: Save
+    error: Error
+
+ability SecretSaver:
+    prepareGetSecret() -> PrepareResult
+    saveSecret(meta: SessionMetaData, secret: SecretData) -> SaveSecretResult

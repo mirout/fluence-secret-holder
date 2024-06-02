@@ -1,0 +1,108 @@
+aqua Worker
+
+import "@fluencelabs/aqua-lib/builtin.aqua"
+import "@fluencelabs/aqua-lib/subnet.aqua"
+
+import Error, errorOk, isError, Id, id from "common.aqua"
+
+export getWorkerServices, getWorkerServiceSignature, getWorkerServiceSignatureByAlias 
+
+
+data ServiceIdAlias:
+    serviceId: Id
+    aliases: []string
+
+data WorkerWithServicesId:
+    workerId: Id
+    services: []ServiceIdAlias
+
+data GetWorkerServicesServicesResult:
+    error: Error
+    value: WorkerWithServicesId
+
+func getWorkerServices(workers: []Worker) -> []GetWorkerServicesServicesResult:
+    res: *GetWorkerServicesServicesResult
+
+    for w <- workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                srvs <- Srv.list()
+                services: *ServiceIdAlias
+                for s <- srvs:
+                    aliases <- Srv.info(s.id)
+                    services <<- ServiceIdAlias(serviceId=id(s.id), aliases=s.aliases)
+                
+                res <<- GetWorkerServicesServicesResult(error=errorOk(), value=WorkerWithServicesId(workerId=id(w.worker_id!), services=services))
+        else:
+            error = Error(is_ok=false, message="Worker id is nil")
+            workerServices = WorkerWithServicesId(workerId=id(""), services=[])
+            res <<- GetWorkerServicesServicesResult(error=error, value=workerServices)
+
+    <- res
+
+data WorkerWithServiceIds:
+    worker: Worker
+    serviceIds: []Id
+
+data ServiceWithSignatures:
+    serviceId: Id
+    interface: []FunctionSignature
+
+data WorkerServices:
+    workerId: Id
+    services: []ServiceWithSignatures
+
+data GetWorkerServiceSignaturesResult:
+    error: Error
+    value: WorkerServices
+
+func getWorkerServiceSignature(input: []WorkerWithServiceIds) -> []GetWorkerServiceSignaturesResult:
+    res: *GetWorkerServiceSignaturesResult
+
+    for w <- input:
+        if w.worker.worker_id != nil:
+            on w.worker.worker_id! via w.worker.host_id:
+                signatures: *ServiceWithSignatures
+                for srvId <- w.serviceIds:
+                    srv <- Srv.get_interface(srvId.id)
+                    signatures <<- ServiceWithSignatures(serviceId=srvId, interface=srv.function_signatures)
+                res <<- GetWorkerServiceSignaturesResult(error=errorOk(), value=WorkerServices(workerId=id(w.worker.worker_id!), services=signatures))
+                
+        else:
+            error = Error(is_ok=false, message="Worker id is nil")
+            workerServices = WorkerServices(workerId=id(""), services=[])
+            res <<- GetWorkerServiceSignaturesResult(error=error, value=workerServices)
+
+    <- res
+
+data ServiceAliasWithSignatures:
+    serviceAlias: string
+    interface: []FunctionSignature
+
+data WorkerServicesAlias:
+    workerId: Id
+    services: []ServiceAliasWithSignatures
+
+data GetWorkerServiceSignaturesByAliasResult:
+    error: Error
+    value: WorkerServicesAlias
+
+func getWorkerServiceSignatureByAlias(workers: []Worker, aliases: []string) -> []GetWorkerServiceSignaturesByAliasResult:
+    res: *GetWorkerServiceSignaturesByAliasResult
+
+    for w <- workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                signatures: *ServiceAliasWithSignatures
+                for a <- aliases:
+                    srvId <- Srv.resolve_alias(a)
+                    srv <- Srv.get_interface(srvId)
+                    signatures <<- ServiceAliasWithSignatures(serviceAlias=a, interface=srv.function_signatures)
+                
+                res <<- GetWorkerServiceSignaturesByAliasResult(error=errorOk(), value=WorkerServicesAlias(workerId=id(w.worker_id!), services=signatures))
+        else:
+            error = Error(is_ok=false, message="Worker id is nil")
+            workerServices = WorkerServicesAlias(workerId=id(""), services=[])
+            res <<- GetWorkerServiceSignaturesByAliasResult(error=error, value=workerServices)
+
+    <- res

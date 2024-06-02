@@ -1,0 +1,11 @@
+[package]
+name = "multiservice-marine-test"
+version = "0.1.0"
+authors = ["Michael Ruzavin"]
+edition = "2021"
+
+[dependencies]
+
+[dev-dependencies]
+marine-rs-sdk-test = "0.16.1"
+crypto-utils = { path = "../../crates/crypto-utils" }

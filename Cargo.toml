@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+  "src/services/secret-holder/modules/secret-facade",
+  "src/services/secret-holder/modules/secret-mover",
+  "src/services/modules/localfile-adapter",
+  "src/services/secret-holder/modules/secret-saver-adapter",
+  "src/services/modules/secret-user",
+  "examples/alchemy-rpc/service/alchemy-rpc-facade",
+  "src/integration-tests/services/secret-user-with-use/use-secret",
+  "src/services/modules/crypto-module"
+]
+
+[workspace.dependencies.curl-effector-imports]
+version = "0.1.1"

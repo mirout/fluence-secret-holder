@@ -1,0 +1,95 @@
+aqua AlchemyRpc declares *
+
+import "@fluencelabs/aqua-lib/builtin.aqua"
+import "@fluencelabs/aqua-lib/subnet.aqua"
+import "services.aqua"
+
+use "deals.aqua"
+
+export initializeSecretHolderAll, getLastBlock, getAlchemyDeal, getBalance
+
+func getAlchemyDeal() -> string:
+    deals <- Deals.get()
+    dealId = deals.alchemyRpcDeployment!.dealIdOriginal
+
+    <- dealId
+
+-- Resolve subnet for the deal
+func resolveDealSubnet(dealId: string) -> SubnetResolveResult:
+    on HOST_PEER_ID:
+        subnet <- Subnet.resolve(dealId)
+    <- subnet
+
+-- Return list of workers in the subnet
+func resolveSubnet() -> SubnetResolveResult:
+    deals <- Deals.get()
+    dealId = deals.alchemyRpcDeployment!.dealIdOriginal
+
+    <- resolveDealSubnet(dealId)
+
+data WorkerError:
+    workerId: string
+    error: Error
+
+-- Initialize SecretHolder on provided workers
+func initializeSecretHolder(workers: []Worker) -> []WorkerError:
+    res: *WorkerError
+    
+    for w <- workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                initResult = SecretHolder.initialize()
+                res <<- WorkerError(workerId=w.worker_id!, error=initResult)
+        else:
+            error = Error(is_ok=false, message="Worker id is nil")
+            res <<- WorkerError(workerId="", error=error)
+    
+    <- res
+
+-- Initialize SecretHolder on all workers in the subnet
+func initializeSecretHolderAll() -> []WorkerError:
+    worker <- resolveSubnet()
+    if !worker.success:
+        Console.print(["Failed to resolve subnet: ", worker.error])
+
+    res: *WorkerError
+
+    <- initializeSecretHolder(worker.workers)
+
+func getLastBlock(secretId: string) -> []AlchemyRpcResult, []Error:
+    res: *AlchemyRpcResult
+    errors: *Error
+
+    workers <- resolveSubnet()
+
+    for w <- workers.workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                try:
+                    errors <- SecretHolder.prepare_to_use(secretId)
+                    res <- AlchemyRpc.get_last_block(secretId)
+                catch e:
+                    error = Error(is_ok=false, message=e.message)
+                    errors <<- error
+                
+    
+    <- res, errors
+
+func getBalance(secretId: string, account: string) -> []AlchemyRpcResult, []Error:
+    res: *AlchemyRpcResult
+    errors: *Error
+
+    workers <- resolveSubnet()
+
+    for w <- workers.workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                try:
+                    errors <- SecretHolder.prepare_to_use(secretId)
+                    res <- AlchemyRpc.get_eth_get_balance(secretId, account, "latest")
+                catch e:
+                    error = Error(is_ok=false, message=e.message)
+                    errors <<- error
+                
+    
+    <- res, errors

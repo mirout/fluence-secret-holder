@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=../../../.fluence/schemas/service.json
+version: 0
+
+name: secret_holder 
+
+modules:
+  facade:
+    get: modules/secret-facade
+  secret_mover:
+    get: modules/secret-mover
+  localfile_adapter:
+    get: ../modules/localfile-adapter
+  sqlite3:
+    get: https://github.com/fluencelabs/sqlite/releases/download/sqlite-wasm-v0.18.1/sqlite3.tar.gz
+  secret_saver_adapter:
+    get: modules/secret-saver-adapter
+  crypto_module:
+    get: ../modules/crypto-module

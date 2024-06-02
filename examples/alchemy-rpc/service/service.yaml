@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../.fluence/schemas/service.json
+version: 0
+
+name: alchemy_rpc 
+
+modules:
+  facade:
+    get: alchemy-rpc-facade
+  secret_user_default:
+    get: ../../../src/services/modules/secret-user-default
+  curl_effector:
+    get: https://github.com/fluencelabs/curl-effector/releases/download/effector-v0.1.1/curl_effector.tar.gz

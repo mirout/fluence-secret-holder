@@ -1,0 +1,50 @@
+name: Secret Holder Client 
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'src/secret-holder-client/**'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'src/secret-holder-client/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./src/secret-holder-client
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        working-directory: ./src/secret-holder-client
+        node-version: '18'
+
+    - uses: jetli/wasm-pack-action@v0.4.0
+      with:
+        version: 'latest'
+
+    - name: Install
+      run: npm install --save-dev
+    
+    - name: Build
+      run: cd ../../ && make build-wasm-crypto
+    
+    - name: Lint
+      run: npm run lint
+
+    - name: Prettier
+      run: npm run format:check
+
+    - name: Test
+      run: npm run test
+    
+    - name: Coverage
+      run: npm run test:coverage
+

@@ -1,0 +1,10 @@
+aqua SecretGet declares *
+
+import Id, KeyVec, Error, SecretData from "../common.aqua"
+
+data GetSecretResult:
+    value: SecretData
+    error: Error
+
+ability SecretSender:
+    getSecret(secretId: Id, recieverPublicKey: KeyVec) -> GetSecretResult

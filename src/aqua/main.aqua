@@ -1,0 +1,123 @@
+aqua Main
+
+import "@fluencelabs/aqua-lib/builtin.aqua"
+import "@fluencelabs/aqua-lib/subnet.aqua"
+import "services.aqua"
+
+use "deals.aqua"
+use "hosts.aqua"
+
+import WorkerError, workerError, id, errorOk, isError from "common.aqua"
+import SecretGiverService, GetSecretResult from "secret_worker/local.aqua"
+
+
+-- IMPORTANT: Add exports for all functions that you want to run
+export getSecret, showSubnet, resolveSubnet, resolveDealSubnet, initializeSecretHolder, initializeSecretHolderAll 
+
+data ResolveSubnetResult:
+  error: Error
+  value: []Worker
+
+-- Resolve subnet for the deal
+func resolveDealSubnet(dealId: string) -> ResolveSubnetResult:
+    on HOST_PEER_ID:
+        subnet <- Subnet.resolve(dealId)
+    result: *ResolveSubnetResult
+    if subnet.success == false:
+        error = Error(is_ok=false, message=subnet.error!)
+        result <<- ResolveSubnetResult(error=error, value=[])
+    else:
+        result <<- ResolveSubnetResult(error=errorOk(), value=subnet.workers)
+
+    <- result!
+
+-- Return list of workers in the subnet
+func resolveSubnet() -> ResolveSubnetResult:
+    deals <- Deals.get()
+    dealId = deals.secretHolderDeployment!.dealIdOriginal
+
+    <- resolveDealSubnet(dealId)
+
+-- Initialize SecretHolder on provided workers
+func initializeSecretHolder(workers: []Worker) -> []WorkerError:
+    res: *WorkerError
+    
+    for w <- workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                initResult = SecretHolder.initialize()
+                res <<- workerError(id(w.worker_id!), initResult)
+        else:
+            error = Error(is_ok=false, message="Worker id is nil")
+            res <<- WorkerError(workerId=id(""), error=error)
+    
+    <- res
+
+-- Initialize SecretHolder on all workers in the subnet
+func initializeSecretHolderAll() -> []WorkerError:
+    worker <- resolveSubnet()
+    if isError(worker.error):
+        Console.print(["Failed to resolve subnet: ", worker.error])
+
+    res: *WorkerError
+
+    <- initializeSecretHolder(worker.value)
+
+data WorkerServices:
+    host_id: string
+    worker_id: ?string
+    services: ?[]string
+
+-- Show all services on all workers in the subnet
+func showSubnet() -> []WorkerServices:
+    deals <- Deals.get()
+    dealId = deals.secretHolderDeployment!.dealIdOriginal
+    on HOST_PEER_ID:
+        subnet <- Subnet.resolve(dealId)
+    if subnet.success == false:
+        Console.print(["Failed to resolve subnet: ", subnet.error])
+
+    services: *WorkerServices
+    for w <- subnet.workers:
+        if w.worker_id != nil:
+            on w.worker_id! via w.host_id:
+                -- get list of all services on this worker
+                srvs <- Srv.list()
+
+                -- gather aliases
+                aliases: *string
+                for s <- srvs:
+                    if s.aliases.length != 0:
+                        aliases <<- s.aliases[0]
+
+                services <<- WorkerServices(host_id=w.host_id, worker_id=w.worker_id, services=?[aliases])
+        else:
+            services <<- WorkerServices(host_id=w.host_id, worker_id=nil, services=nil)
+
+    <- services
+
+
+func getSecret(secret_id: string) -> []GetSecretForUseResult:
+    deals <- Deals.get()
+    dealId = deals.secretHolderDeployment!.dealIdOriginal
+    on HOST_PEER_ID:
+        subnet <- Subnet.resolve(dealId)
+    if subnet.success == false:
+        Console.print(["Failed to resolve subnet: ", subnet.error])
+
+    secrets: *GetSecretForUseResult
+
+    try: 
+        for w <- subnet.workers:
+            if w.worker_id != nil:
+                on w.worker_id! via w.host_id:
+                    SecretHolder.prepare_to_use(secret_id)
+                    secret <- SecretUser.get_secret(secret_id)
+                    secrets <<- secret
+            else:
+                error = Error(is_ok=false, message="Worker id is nil")
+                secrets <<- GetSecretForUseResult(value=GetSecretForUse(secret=[]), error=error)
+    catch e:
+        error = Error(is_ok=false, message=e.message)
+        secrets <<- GetSecretForUseResult(value=GetSecretForUse(secret=[]), error=error)
+    <- secrets

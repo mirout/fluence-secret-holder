@@ -1,0 +1,63 @@
+aqua PeerSecretWorker declares *
+
+import "services.aqua"
+import GetSecretResult, SecretSender from "getter.aqua"
+import SaveSecretResult, SecretSaver, SessionMetaData, PrepareResult, Save from "saver.aqua"
+import "@fluencelabs/aqua-lib/subnet.aqua"
+import "../common.aqua"
+
+func onWorkerSecretSender(worker: Worker) -> SecretSender:
+    getSecret = func(secretId: Id, recieverPublicKey: KeyVec) -> GetSecretResult:
+        on worker.worker_id! via worker.host_id:
+            workerKey <- SecretHolder.start_handshake()
+            request = GetSecretRequest(
+                    secret_id=secretId.id,
+                    metadata=CryptoMetadata(
+                        nonce=[],
+                        self_public_key=workerKey.value.public_key,
+                        other_public_key=recieverPublicKey
+                    )
+                )
+            result <- SecretHolder.get_secret(request)
+        <- GetSecretResult(
+            value=SecretData(
+                secret=result.value.secret,
+                nonce=result.value.nonce,
+                publicKey=workerKey.value.public_key
+            ),
+            error=result.error
+        )
+        
+    <- SecretSender(getSecret)
+
+func onWorkerSecretSaver(worker: Worker, secretExpiredAt: u64) -> SecretSaver:
+    prepareGetSecret = func() -> PrepareResult:
+        on worker.worker_id! via worker.host_id:
+            key <- SecretHolder.start_handshake()
+
+        <- PrepareResult(
+            value=SessionMetaData(
+                sessionId=Id(id=""),
+                recieverPublicKey=key.value.public_key
+            ),
+            error=errorOk()
+        )
+    
+    saveSecret = func(meta: SessionMetaData, secret: SecretData) -> SaveSecretResult:
+        on worker.worker_id! via worker.host_id:
+            calldata = SaveSecretRequest(
+                    ciphertext=secret.secret,
+                    expired_at=secretExpiredAt,
+                    metadata=CryptoMetadata(
+                        nonce=secret.nonce,
+                        self_public_key=meta.recieverPublicKey,
+                        other_public_key=secret.publicKey
+                    )
+                )
+            save_result <- SecretHolder.save_secret(calldata)
+        <- SaveSecretResult(
+            value=Save(secretId=Id(id=save_result.value.secret_id)),
+            error=save_result.error
+        )
+
+    <- SecretSaver(prepareGetSecret, saveSecret)

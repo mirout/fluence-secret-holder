@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../.fluence/schemas/module.json
+version: 1
+
+type: rust
+
+name: localfile_adapter

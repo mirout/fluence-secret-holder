@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=.fluence/schemas/fluence.json
+
+# Defines Fluence Project, most importantly - what exactly you want to deploy and how. You can use `fluence init` command to generate a template for new Fluence project
+
+# Documentation: https://github.com/fluencelabs/cli/tree/main/docs/configs/fluence.md
+
+version: 8
+
+deployments:
+  secretHolderDeployment:
+    targetWorkers: 3
+    pricePerWorkerEpoch: '0.0001'
+    initialBalance: '1'
+    services: [ secret-holder, secret-user ]
+    spells: []
+  
+  integrationTestDeployment:
+    targetWorkers: 3
+    pricePerWorkerEpoch: '0.0001'
+    initialBalance: '1'
+    services: [ secret-holder, secret-user, secret-user-2 ]
+    spells: []
+
+  alchemyRpcDeployment:
+    targetWorkers: 1
+    pricePerWorkerEpoch: '0.0001'
+    initialBalance: '1'
+    services: [ alchemy-rpc, secret-holder ]
+    spells: []
+
+services:
+  secret-holder:
+    get: src/services/secret-holder
+  alchemy-rpc:
+    get: examples/alchemy-rpc/service
+  secret-user:
+    get: src/integration-tests/services/secret-user-default
+  secret-user-2:
+    get: src/integration-tests/services/secret-user-with-use
+
+aquaDependencies:
+  "@fluencelabs/aqua-lib": 0.9.1
+  "@fluencelabs/spell": 0.7.6
+
+compileAqua:
+  default:
+    input: src/aqua
+    output: src/secret-holder-client/src/compiled-aqua
+    target: ts
+  integrationTest:
+    input: src/integration-tests/aqua
+    output: src/integration-tests/src/compiled-aqua
+    target: ts
+  alchemyRpc:
+    input: examples/alchemy-rpc/aqua
+    output: examples/alchemy-rpc/client/src/compiled-aqua
+    target: ts

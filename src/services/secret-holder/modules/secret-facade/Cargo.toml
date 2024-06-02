@@ -1,0 +1,22 @@
+[package]
+name = "secret_facade"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# log = "0.4.20"
+marine-rs-sdk = { version="0.14.0" }
+marine-error = { path = "../../../../crates/marine-error" }
+marine-error-derive = { path = "../../../../crates/marine-error/marine-error-derive" }
+secret-holder-utils = { path = "../../../../crates/secret-holder-utils" }
+secret_saver_adapter = { path = "../secret-saver-adapter" }
+crypto_module ={ path = "../../../modules/crypto-module" }
+crypto-imports ={ path = "../../../modules/crypto-module/imports" }
+secret-mover-imports = {path = "../secret-mover/imports"}
+crypto-utils = { path = "../../../../crates/crypto-utils" }
+
+[dev-dependencies]
+marine-rs-sdk-test = "0.16.0"
+once_cell = "1.19.0"
